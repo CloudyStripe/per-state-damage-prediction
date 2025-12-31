@@ -1,6 +1,13 @@
 import { TransmissionRecord, DamageRecord, StateYearMetrics } from '../types';
 
 /**
+ * Threshold for meaningful residual percentage.
+ * If the absolute residual percentage is below this threshold (0.5%),
+ * the expected values are considered too close to actual values to be useful.
+ */
+const MEANINGFUL_RESIDUAL_THRESHOLD = 0.005;
+
+/**
  * Parse CSV text into structured records
  */
 export function parseCSV<T>(csvText: string, parser: (row: string[]) => T): T[] {
@@ -198,11 +205,23 @@ export function transformData(
     metric.expected_damage_rate = expectedRate;
     
     if (expectedRate !== null && metric.transmissions > 0) {
-      metric.expected_damages = (metric.transmissions * expectedRate) / 10000;
+      const rawExpectedDamages = (metric.transmissions * expectedRate) / 10000;
       
-      if (metric.expected_damages > 0) {
-        metric.residual = metric.actual_damages - metric.expected_damages;
-        metric.residual_pct = metric.residual / metric.expected_damages;
+      if (rawExpectedDamages > 0) {
+        const rawResidual = metric.actual_damages - rawExpectedDamages;
+        const rawResidualPct = rawResidual / rawExpectedDamages;
+        
+        // Check if the residual is meaningful (not just rounding noise)
+        // If the absolute residual percentage is below the threshold,
+        // the expected value is too close to actual to be useful
+        const isResidualMeaningful = Math.abs(rawResidualPct) >= MEANINGFUL_RESIDUAL_THRESHOLD;
+        
+        if (isResidualMeaningful) {
+          metric.expected_damages = rawExpectedDamages;
+          metric.residual = rawResidual;
+          metric.residual_pct = rawResidualPct;
+        }
+        // If not meaningful, leave expected_damages, residual, and residual_pct as null
       }
     }
   }
