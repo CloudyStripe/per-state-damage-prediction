@@ -159,4 +159,40 @@ CA,2019,2980000`;
       expect(year2018.every(m => m.year === 2018)).toBe(true);
     });
   });
+
+  describe('expected_damage_rate for consecutive years', () => {
+    it('should show different expected_damage_rate for different states in the same year', () => {
+      // Each state has different damage rates
+      const trans = [
+        { state: 'AL', year: 2018, transmissions: 100000 },
+        { state: 'AL', year: 2019, transmissions: 100000 },
+        { state: 'CA', year: 2018, transmissions: 100000 },
+        { state: 'CA', year: 2019, transmissions: 100000 },
+      ];
+      const dam = [
+        { state: 'AL', year: 2018, total_damages: 750 },  // rate = 75
+        { state: 'AL', year: 2019, total_damages: 800 },  // rate = 80
+        { state: 'CA', year: 2018, total_damages: 500 },  // rate = 50
+        { state: 'CA', year: 2019, total_damages: 600 },  // rate = 60
+      ];
+      
+      const metrics = transformData(trans, dam);
+      
+      // Debug: print all metrics
+      for (const m of metrics) {
+        console.log(`${m.state} ${m.year}: damage_rate=${m.damage_rate?.toFixed(2)}, expected_damage_rate=${m.expected_damage_rate?.toFixed(2) ?? 'null'}`);
+      }
+      
+      const al2019 = metrics.find(m => m.state === 'AL' && m.year === 2019);
+      const ca2019 = metrics.find(m => m.state === 'CA' && m.year === 2019);
+      
+      console.log(`\nAL 2019: expected_damage_rate=${al2019?.expected_damage_rate}`);
+      console.log(`CA 2019: expected_damage_rate=${ca2019?.expected_damage_rate}`);
+      
+      // AL and CA should have DIFFERENT expected_damage_rates in 2019
+      // because they had different rates in 2018
+      // But the current code falls back to national average for both!
+      expect(al2019?.expected_damage_rate).not.toEqual(ca2019?.expected_damage_rate);
+    });
+  });
 });
