@@ -53,6 +53,22 @@ const AboutData: React.FC = () => {
             <li>Expected rates require at least one prior year of data</li>
             <li>Results are for exploratory analytics, not regulatory reporting</li>
           </ul>
+          <h4>When N/A is Displayed</h4>
+          <p>
+            Values are displayed as <strong>N/A</strong> when accurate data cannot be shown:
+          </p>
+          <ul>
+            <li>
+              <strong>Expected Damages / Residuals</strong>: Shown as N/A when the expected 
+              value is too close to the actual value to be meaningful (difference less than 
+              0.5%). This typically occurs when historical damage rates have very low variance 
+              and cannot reliably distinguish expected from actual performance.
+            </li>
+            <li>
+              <strong>Expected Rate</strong>: Shown as N/A when there is no prior year data 
+              available to calculate a baseline.
+            </li>
+          </ul>
         </div>
       )}
     </div>
