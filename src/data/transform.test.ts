@@ -79,9 +79,10 @@ CA,2019,2980000`;
       expect(metric2021?.residual).toBeCloseTo(100, 0);
     });
 
-    it('should show N/A for expected damages when residual is not meaningful', () => {
+    it('should compute residuals even when values are close to expected', () => {
       // Create data where all years have the same damage rate
-      // This simulates the synthetic data issue
+      // Previously this would filter out "non-meaningful" residuals,
+      // but now we show all residuals regardless of magnitude
       const uniformTransmissions: TransmissionRecord[] = [
         { state: 'TX', year: 2018, transmissions: 100000 },
         { state: 'TX', year: 2019, transmissions: 100000 },
@@ -102,12 +103,12 @@ CA,2019,2980000`;
       // Expected rate = (75 + 75 + 75) / 3 = 75
       // Expected damages = 100000 * 75 / 10000 = 750
       // Actual damages = 750
-      // Residual = 0, which is 0% difference (below the 0.5% threshold)
-      // So expected_damages, residual, and residual_pct should be null
+      // Residual = 0, which is 0% difference
+      // All residuals are now shown regardless of magnitude
       expect(metric2021?.expected_damage_rate).toBeCloseTo(75, 1);
-      expect(metric2021?.expected_damages).toBeNull();
-      expect(metric2021?.residual).toBeNull();
-      expect(metric2021?.residual_pct).toBeNull();
+      expect(metric2021?.expected_damages).toBeCloseTo(750, 0);
+      expect(metric2021?.residual).toBeCloseTo(0, 0);
+      expect(metric2021?.residual_pct).toBeCloseTo(0, 4);
     });
 
     it('should handle missing damage data gracefully', () => {

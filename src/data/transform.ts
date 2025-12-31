@@ -2,10 +2,11 @@ import { TransmissionRecord, DamageRecord, StateYearMetrics } from '../types';
 
 /**
  * Threshold for meaningful residual percentage.
- * If the absolute residual percentage is below this threshold (0.5%),
+ * If the absolute residual percentage is below this threshold,
  * the expected values are considered too close to actual values to be useful.
+ * Set to 0 to show all residuals regardless of magnitude.
  */
-const MEANINGFUL_RESIDUAL_THRESHOLD = 0.005;
+const MEANINGFUL_RESIDUAL_THRESHOLD = 0;
 
 /**
  * Parse CSV text into structured records

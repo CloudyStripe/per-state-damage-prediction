@@ -61,9 +61,13 @@ const USMap: React.FC<USMapProps> = ({ metrics, selectedYear, selectedMetric }) 
   // Color scale based on metric type
   const getColorScale = useCallback(() => {
     const yearMetrics = metrics.filter((m) => m.year === selectedYear);
+    
+    // For rate metrics, filter out zero values as they indicate missing data
+    // For residual metrics, include all non-null values (including negative)
+    const isRateMetric = selectedMetric === 'damage_rate' || selectedMetric === 'expected_damage_rate';
     const values = yearMetrics
       .map((m) => m[selectedMetric])
-      .filter((v): v is number => v !== null);
+      .filter((v): v is number => v !== null && (!isRateMetric || v > 0));
 
     if (values.length === 0) {
       return () => '#ccc';
@@ -76,7 +80,7 @@ const USMap: React.FC<USMapProps> = ({ metrics, selectedYear, selectedMetric }) 
         .scaleSequential(d3.interpolateRdBu)
         .domain([maxAbs, -maxAbs]);
     } else {
-      // Sequential scale for rates
+      // Sequential scale for rates - use actual min/max from data
       const [min, max] = d3.extent(values);
       return d3
         .scaleSequential(d3.interpolateBlues)
@@ -170,9 +174,13 @@ const USMap: React.FC<USMapProps> = ({ metrics, selectedYear, selectedMetric }) 
   // Render legend
   const renderLegend = () => {
     const yearMetrics = metrics.filter((m) => m.year === selectedYear);
+    
+    // For rate metrics, filter out zero values as they indicate missing data
+    // For residual metrics, include all non-null values (including negative)
+    const isRateMetric = selectedMetric === 'damage_rate' || selectedMetric === 'expected_damage_rate';
     const values = yearMetrics
       .map((m) => m[selectedMetric])
-      .filter((v): v is number => v !== null);
+      .filter((v): v is number => v !== null && (!isRateMetric || v > 0));
 
     if (values.length === 0) return null;
 
