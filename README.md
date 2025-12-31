@@ -1,46 +1,177 @@
-# Getting Started with Create React App
+# US Ticket-to-Damage Proxy Model
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+An interactive US map web application that benchmarks underground utility damages against 811 ticket volume at the state level. This exploratory analytics tool visualizes actual damages, expected damages (historical baseline), and residuals using real, publicly available CGA datasets.
 
-## Available Scripts
+## What This MVP Proves
 
-In the project directory, you can run:
+1. **State-level damage benchmarking is feasible** using publicly available CGA 811 transmission data and DIRT damage reports
+2. **Historical baselines work** for computing expected damage rates without data leakage (prior years only)
+3. **Residual analysis identifies outliers** - states performing better or worse than their historical benchmarks
+4. **Interactive visualization enables exploration** of damage patterns across time and geography
 
-### `npm start`
+## What Better Data Would Unlock
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+1. **Sub-state granularity**: County or utility-level data would enable more actionable insights
+2. **Monthly trends**: Seasonal patterns and trend analysis
+3. **Root cause fields**: Excavator type, notification status, facility type
+4. **Denominator alternatives**: Excavation permits, construction activity indices
+5. **Complete reporting**: Mandatory vs. voluntary reporting would reduce undercount bias
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Data Sources
 
-### `npm test`
+### CGA 811 Center Dashboard — Ticket Volume (Exposure)
+- **File**: `public/data/cga_transmissions.csv`
+- **Fields**: state, year, transmissions
+- **Notes**: Annual 811 ticket/transmission totals
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### CGA DIRT Annual Report — Damage Counts
+- **File**: `public/data/cga_dirt_damages.csv`
+- **Fields**: state, year, total_damages
+- **Notes**: Voluntary reporting with undercount bias
 
-### `npm run build`
+### US States Geometry
+- **Package**: `us-atlas` (TopoJSON)
+- **Projection**: Albers USA
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Core Metric Definitions
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Damage Rate
+```
+damage_rate = (total_damages / transmissions) × 10,000
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Expected Damage Rate
+For each state + year Y:
+```
+expected_damage_rate(Y) = average(damage_rate) for all years < Y
+```
+Rules:
+- Uses prior years only (no leakage)
+- Prefers last 3 available years
+- Falls back to national average if < 3 years of history
 
-### `npm run eject`
+### Expected Damages
+```
+expected_damages = transmissions × expected_damage_rate / 10,000
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### Residuals
+```
+residual = actual_damages − expected_damages
+residual_pct = residual / expected_damages
+```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Tech Stack
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+- **React 19** with TypeScript
+- **D3.js** for choropleth mapping (SVG, no API keys required)
+- **TopoJSON** for US state boundaries
+- **Create React App** for build tooling
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## Project Structure
 
-## Learn More
+```
+per-state-damage-prediction/
+├── public/
+│   └── data/
+│       ├── cga_transmissions.csv    # 811 ticket volume data
+│       └── cga_dirt_damages.csv     # Damage counts data
+├── src/
+│   ├── components/
+│   │   ├── USMap.tsx               # Main choropleth map with D3
+│   │   ├── StateTooltip.tsx        # Hover tooltip with metrics
+│   │   ├── MetricSelector.tsx      # Dropdown for metric selection
+│   │   ├── YearSelector.tsx        # Dropdown for year selection
+│   │   └── AboutData.tsx           # Data limitations panel
+│   ├── data/
+│   │   ├── loader.ts               # Data loading utilities
+│   │   └── transform.ts            # Metric calculations
+│   ├── types/
+│   │   └── index.ts                # TypeScript interfaces
+│   ├── App.tsx                     # Main application
+│   └── App.css                     # Styles
+└── package.json
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Getting Started
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Prerequisites
+- Node.js 16+
+- npm 7+
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/CloudyStripe/per-state-damage-prediction.git
+cd per-state-damage-prediction
+
+# Install dependencies
+npm install
+```
+
+### Running Locally
+
+```bash
+# Start development server
+npm start
+```
+
+Open [http://localhost:3000](http://localhost:3000) to view the application.
+
+### Building for Production
+
+```bash
+npm run build
+```
+
+### Running Tests
+
+```bash
+npm test
+```
+
+## Features
+
+### Map
+- US choropleth map at state level
+- Pre-projected Albers USA geometry (no tiles/API keys)
+
+### Metric Selector
+- Actual damage rate
+- Expected damage rate
+- Residual (count)
+- Residual %
+
+### Time Selector
+- Year dropdown
+- Only years with sufficient historical baseline are enabled
+
+### Tooltips
+Each state shows on hover:
+- Transmissions
+- Actual damages
+- Expected damages
+- Damage rate
+- Residual and residual %
+
+### Color Scales
+- Sequential scale (blue) for rates
+- Diverging scale (blue-red) for residuals
+
+### Data Transparency
+"About this data" panel with:
+- Data source descriptions
+- Metric definitions
+- Known limitations
+
+## Data Limitations
+
+- DIRT reporting is voluntary → undercount bias
+- State-level aggregation only
+- Annual data only (no seasonal analysis)
+- Results are exploratory benchmarks, not exact risk measures
+
+## License
+
+MIT
