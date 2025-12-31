@@ -58,7 +58,8 @@ export function calculateDamageRate(damages: number, transmissions: number): num
 
 /**
  * Calculate expected damage rate using prior years only
- * Uses the last 3 available years if possible, otherwise fallback to national average
+ * Uses up to the last 3 available years of state-specific data,
+ * falling back to national average only if no state-specific data exists
  */
 export function calculateExpectedDamageRate(
   state: string,
@@ -72,15 +73,15 @@ export function calculateExpectedDamageRate(
   const priorRates = stateHistory
     .filter(m => m.year < year && m.damage_rate !== null)
     .sort((a, b) => b.year - a.year) // Most recent first
-    .slice(0, 3) // Take last 3 years
+    .slice(0, 3) // Take up to last 3 years
     .map(m => m.damage_rate as number);
   
-  // If we have at least 3 prior years of data, use them
-  if (priorRates.length >= 3) {
+  // Use state-specific prior data if available (even if fewer than 3 years)
+  if (priorRates.length > 0) {
     return priorRates.reduce((sum, rate) => sum + rate, 0) / priorRates.length;
   }
   
-  // If fewer than 3 years, fallback to national average for the most recent prior year
+  // Only fall back to national average if no state-specific data exists
   const priorYear = year - 1;
   const natAvg = nationalAvgRate.get(priorYear);
   
