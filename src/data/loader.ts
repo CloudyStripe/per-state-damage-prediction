@@ -10,7 +10,7 @@ import {
  * Load and parse transmission CSV data
  */
 export async function loadTransmissions(): Promise<TransmissionRecord[]> {
-  const response = await fetch('/data/cga_transmissions.csv');
+  const response = await fetch(`${process.env.PUBLIC_URL}/data/cga_transmissions.csv`);
   const text = await response.text();
   return parseCSV(text, parseTransmissionRow);
 }
@@ -19,7 +19,7 @@ export async function loadTransmissions(): Promise<TransmissionRecord[]> {
  * Load and parse damage CSV data
  */
 export async function loadDamages(): Promise<DamageRecord[]> {
-  const response = await fetch('/data/cga_dirt_damages.csv');
+  const response = await fetch(`${process.env.PUBLIC_URL}/data/cga_dirt_damages.csv`);
   const text = await response.text();
   return parseCSV(text, parseDamageRow);
 }
